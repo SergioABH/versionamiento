@@ -1,4 +1,4 @@
-name: Increment Version
+name: Update version
 
 on:
   push:
@@ -6,37 +6,31 @@ on:
       - main
 
 jobs:
-  increment-version:
+  update-version:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out code
-        uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: 16
+    - name: Setup Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: 16
 
-      - name: Configure Git
-        run: |
-          git config user.name "SergioABH"
-          git config user.email "bedoyasergio3@gmail.com"
+    - name: Update version
+      run: |
+        npm version ${{ github.event.inputs.new_version }} --message "[skip ci] Bump version to ${{ github.event.inputs.new_version }}"
 
-      - name: Check working directory status
-        run: |
-          if ! git diff-index --quiet HEAD --; then
-            git stash
-          fi
+      env:
+        NEW_VERSION: ${{ github.event.inputs.new_version }}
 
-      - name: Increment version
-        id: increment_version
-        run: |
-          NEW_VERSION=$(npm version patch -m "💪 Increase Version to %s")
-          echo "New version: $NEW_VERSION"
-          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
-          echo "name=NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
-
-      - name: Push changes
-        run: |
-          git push
+    - name: Commit and push
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add .
+        git commit -m "[skip ci] Bump version to ${{ github.event.inputs.new_version }}"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
