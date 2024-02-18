@@ -60,7 +60,7 @@ jobs:
           new_version="$major.$minor.$patch-rc.$rc_number"
 
           # Actualiza la versión en package.json
-          npm version "$new_version" --no-git-tag-version
+          echo "{\"version\":\"$new_version\"}" > package.json
 
           # Imprime la nueva versión para referencia
           echo "Nueva versión: $new_version"
@@ -76,9 +76,12 @@ jobs:
             version_type="patch"
           fi
 
-          npm version "$version_type" -m "Bump version to %s"
-        fi
+          # Actualiza la versión en package.json
+          npm version "$version_type" --no-git-tag-version
 
+          # Imprime la nueva versión para referencia
+          echo "Nueva versión: $(node -p "require('./package.json').version")"
+        fi
 
     - name: Push Changes and Tags
       run: |
