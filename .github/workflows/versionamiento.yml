@@ -58,7 +58,7 @@ jobs:
         git push origin main
         git push --tags
 
-    # Nota: Si usas un  de Acceso Personal (PAT), asegúrate de configurarlo en tu repositorio como un secreto llamado GH_TOKEN.
+    # Nota: Si usas un Token de Acceso Personal (PAT), asegúrate de configurarlo en tu repositorio como un secreto llamado GH_TOKEN.
     - name: Push Changes with Token
       if: github.event_name == 'push'
       run: |
