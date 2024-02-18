@@ -87,5 +87,5 @@ jobs:
 
     - name: Commit and push changes
       run: |
-        git commit -am "Bump version to $VERSION"
+        git commit -m "Bump version to $VERSION"
         git push
