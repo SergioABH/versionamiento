@@ -81,8 +81,10 @@ jobs:
 
     - name: Push Changes and Tags
       run: |
-        git push origin main
+        current_branch=${GITHUB_REF#refs/heads/}
+        git push origin "$current_branch"
         git push --tags
+
 
     - name: Push Changes with Token
       if: github.event_name == 'push'
