@@ -35,49 +35,14 @@ jobs:
         commit_message=$(git log --format=%B -n 1 HEAD)
 
         if [[ "$branch_name" == "main" ]]; then
-          if echo "$commit_message" | grep -q 'fix'; then
-            version_type="patch"
-          elif echo "$commit_message" | grep -q 'feature'; then
-            version_type="minor"
-          elif echo "$commit_message" | grep -q 'breaking change'; then
-            version_type="major"
-          else
-            version_type="patch"
-          fi
-        elif [[ "$branch_name" == "pre-patch" ]]; then
+          version_type="default"
+        elif [[ "$branch_name" == "pre-patch" || "$branch_name" == "pre-minor" ]]; then
           version_type="prerelease"
-          if echo "$commit_message" | grep -q 'fix'; then
-            npm version patch --preid=rc -m "Bump version to %s"
-          elif echo "$commit_message" | grep -q 'feature'; then
-            npm version minor --preid=rc -m "Bump version to %s"
-          elif echo "$commit_message" | grep -q 'breaking change'; then
-            npm version major --preid=rc -m "Bump version to %s"
-          else
-            npm version patch --preid=rc -m "Bump version to %s"
-          fi
-        elif [[ "$branch_name" == "pre-minor" ]]; then
-          version_type="prerelease"
-          if echo "$commit_message" | grep -q 'fix'; then
-            npm version patch --preid=rc -m "Bump version to %s"
-          elif echo "$commit_message" | grep -q 'feature'; then
-            npm version minor --preid=rc -m "Bump version to %s"
-          elif echo "$commit_message" | grep -q 'breaking change'; then
-            npm version major --preid=rc -m "Bump version to %s"
-          else
-            npm version patch --preid=rc -m "Bump version to %s"
-          fi
         elif [[ "$branch_name" == "minor" ]]; then
           version_type="minor"
-          if echo "$commit_message" | grep -q 'fix'; then
-            npm version patch -m "Bump version to %s"
-          elif echo "$commit_message" | grep -q 'feature'; then
-            npm version minor -m "Bump version to %s"
-          elif echo "$commit_message" | grep -q 'breaking change'; then
-            npm version major -m "Bump version to %s"
-          else
-            npm version patch -m "Bump version to %s"
-          fi
         fi
+
+        npm version "$version_type" --preid=rc -m "Bump version to %s"
 
     - name: Update version in package.json
       run: |
@@ -93,3 +58,6 @@ jobs:
         else
           echo "No changes to commit."
         fi
+
+    - name: Push tags
+      run: git push --tags
