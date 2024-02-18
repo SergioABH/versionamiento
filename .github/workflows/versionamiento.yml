@@ -42,18 +42,26 @@ jobs:
           version_type="minor"
         fi
 
-        npm version "$version_type" --preid=rc -m "Bump version to %s"
+        # Obtener la versión actual y calcular la nueva versión
+        current_version=$(node -p "require('./package.json').version")
+        IFS='.-' read -ra version_parts <<< "$current_version"
+        major="${version_parts[0]}"
+        minor="${version_parts[1]}"
+        patch="${version_parts[2]}"
+        prerelease="${version_parts[3]}"
 
-    - name: Update version in package.json
-      run: |
-        VERSION=$(node -p "require('./package.json').version")
-        sed -i -e "s/\"version\": \".*\"/\"version\": \"$VERSION\"/g" package.json
-        git add package.json
+        if [[ "$version_type" == "prerelease" ]]; then
+          prerelease="rc.0"
+        fi
+
+        new_version="$major.$minor.$patch-$prerelease"
+        echo "{\"version\":\"$new_version\"}" > package.json
 
     - name: Commit and push changes
       run: |
         if [[ $(git status --porcelain) ]]; then
-          git commit -m "Bump version to $VERSION"
+          git add package.json
+          git commit -m "Bump version to $new_version"
           git push
         else
           echo "No changes to commit."
