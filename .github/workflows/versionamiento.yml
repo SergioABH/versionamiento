@@ -46,4 +46,18 @@ jobs:
       run: |
         git push origin main
         git push --tags
+        git push origin :main  # Esto elimina la rama 'main' si no es necesaria
+        # Opcional: puedes eliminar la rama 'main' si ya no la necesitas en tu repositorio
+
+    # Nota: Si usas un Token de Acceso Personal (PAT), asegúrate de configurarlo en tu repositorio como un secreto llamado GH_TOKEN.
+    - name: Push Changes with Token
+      if: github.event_name == 'push'
+      run: |
+        git config --global user.email "bedoyasergio3@gmail.com"
+        git config --global user.name "SergioABH"
+        git remote add origin_with_token "https://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@github.com/SergioABH/versionamiento"
+        git push origin_with_token main
+        git push --tags origin_with_token
+        git push origin_with_token :main
+
 
