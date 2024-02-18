@@ -55,12 +55,13 @@ jobs:
         git config --global user.name "SergioABH"
         git remote add origin_with_token "https://github.com/$GITHUB_REPOSITORY.git"
         git fetch --no-tags origin_with_token +refs/heads/*:refs/remotes/origin_with_token/*
-        git checkout -b main origin_with_token/main
+        git checkout main
         git merge --no-ff origin_with_token/main
         git push origin_with_token HEAD:refs/heads/main
         git push --tags origin_with_token
       env:
         GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
 
 
 
