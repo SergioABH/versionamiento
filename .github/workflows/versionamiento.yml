@@ -60,8 +60,11 @@ jobs:
         git checkout -b main origin_with_token/main
         git merge --no-ff origin_with_token/main
         git push origin_with_token HEAD:refs/heads/main
+        git push --tags origin_with_token
+        # git push origin_with_token :main  # Comentar o eliminar esta línea
       env:
         GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
 
 
 
