@@ -60,4 +60,7 @@ jobs:
         git push origin_with_token HEAD:refs/heads/main
         git push --tags origin_with_token
         git push origin_with_token :main
+      env:
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
 
