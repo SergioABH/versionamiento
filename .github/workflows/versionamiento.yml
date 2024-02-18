@@ -83,6 +83,7 @@ jobs:
       run: |
         VERSION=$(node -p "require('./package.json').version")
         sed -i -e "s/\"version\": \".*\"/\"version\": \"$VERSION\"/g" package.json
+        git add package.json
 
     - name: Commit and push changes
       run: |
