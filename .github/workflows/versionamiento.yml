@@ -28,18 +28,29 @@ jobs:
 
     - name: Determine Version
       run: |
-        # Implementa aquí la lógica para determinar el tipo de versión a incrementar
-        # Puedes basarte en los mensajes de commit, por ejemplo
-
+        commit_message=$(git log --format=%B -n 1 HEAD)
+        
         # Lógica de ejemplo:
-        if git log --format=%B -n 1 HEAD | grep -q 'fix'; then
-          npm version patch -m "Bump version to %s"
-        elif git log --format=%B -n 1 HEAD | grep -q 'feature'; then
-          npm version minor -m "Bump version to %s"
-        elif git log --format=%B -n 1 HEAD | grep -q 'breaking change'; then
-          npm version major -m "Bump version to %s"
+        if echo "$commit_message" | grep -q 'fix'; then
+          version_type="patch"
+        elif echo "$commit_message" | grep -q 'feature'; then
+          version_type="minor"
+        elif echo "$commit_message" | grep -q 'breaking change'; then
+          version_type="major"
         else
-          npm version patch -m "Bump version to %s"
+          version_type="patch"
+        fi
+
+        # Determine si es un pre-release
+        if [[ "$commit_message" == *"-rc."* ]]; then
+          version_type="prerelease"
+        fi
+
+        # Determina el número de versión
+        if [[ "$version_type" == "prerelease" ]]; then
+          npm version "$version_type" --preid=rc -m "Bump version to %s"
+        else
+          npm version "$version_type" -m "Bump version to %s"
         fi
 
     - name: Push Changes and Tags
@@ -61,6 +72,7 @@ jobs:
         git push --tags origin_with_token
       env:
         GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
 
 
 
