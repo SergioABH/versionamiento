@@ -27,9 +27,12 @@ jobs:
 
     - name: Commit and push
       run: |
+        if git diff --quiet; then
+          touch .bump-version-file
+          git add .bump-version-file
+        fi
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add .
         git commit -m "[skip ci] Bump version to ${{ github.event.inputs.new_version }}"
         git push
       env:
