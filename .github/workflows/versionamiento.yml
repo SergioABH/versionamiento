@@ -44,6 +44,6 @@ jobs:
 
     - name: Push Changes and Tags
       run: |
-        git push origin development
+        git push origin main
         git push --tags
 
