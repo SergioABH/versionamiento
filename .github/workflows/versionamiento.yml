@@ -46,8 +46,6 @@ jobs:
       run: |
         git push origin main
         git push --tags
-        git push origin :main  # Esto elimina la rama 'main' si no es necesaria
-        # Opcional: puedes eliminar la rama 'main' si ya no la necesitas en tu repositorio
 
     # Nota: Si usas un Token de Acceso Personal (PAT), asegúrate de configurarlo en tu repositorio como un secreto llamado GH_TOKEN.
     - name: Push Changes with Token
