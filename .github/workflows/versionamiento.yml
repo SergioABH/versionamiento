@@ -32,19 +32,19 @@ jobs:
     - name: Determine Version
       run: |
         commit_message=$(git log --format=%B -n 1 HEAD)
-        
+
         # Lógica de versión personalizada
         if [[ "$commit_message" == *"-rc."* ]]; then
           # Obtén el número de versión actual desde package.json
           current_version=$(node -p "require('./package.json').version")
-          
+
           # Extrae los componentes de la versión actual
           major=$(echo "$current_version" | cut -d. -f1)
           minor=$(echo "$current_version" | cut -d. -f2)
           patch=$(echo "$current_version" | cut -d. -f3)
           prerelease=$(echo "$current_version" | cut -d- -f2)
           rc_number=$(echo "$prerelease" | cut -d. -f2)
-          
+
           # Incrementa el número de rc o reinicia si se cambia a una rama diferente
           if [[ "$GITHUB_REF" == "refs/heads/pre-patch" ]]; then
             rc_number=$((rc_number + 1))
@@ -55,13 +55,13 @@ jobs:
             rc_number=0
             minor=$((minor + 1))
           fi
-          
+
           # Construye la nueva versión
           new_version="$major.$minor.$patch-rc.$rc_number"
-          
+
           # Actualiza la versión en package.json
           npm version "$new_version" --no-git-tag-version
-          
+
           # Imprime la nueva versión para referencia
           echo "Nueva versión: $new_version"
         else
@@ -75,9 +75,10 @@ jobs:
           else
             version_type="patch"
           fi
-          
+
           npm version "$version_type" -m "Bump version to %s"
         fi
+
 
     - name: Push Changes and Tags
       run: |
