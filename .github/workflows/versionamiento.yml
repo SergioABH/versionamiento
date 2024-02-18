@@ -1,12 +1,12 @@
-name: Update version
+name: Versioning Workflow
 
 on:
   push:
     branches:
-      - main
+      - development
 
 jobs:
-  update-version:
+  version:
     runs-on: ubuntu-latest
 
     steps:
@@ -16,30 +16,29 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v2
       with:
-        node-version: 16
+        node-version: '14'
 
-    - name: Update version
+    - name: Install Dependencies
+      run: npm install
+
+    - name: Determine Version
       run: |
-        npm version ${{ github.event.inputs.new_version }} --message "[skip ci] Bump version to ${{ github.event.inputs.new_version }}"
+        # Implementa aquí la lógica para determinar el tipo de versión a incrementar
+        # Puedes basarte en los mensajes de commit, por ejemplo
 
-      env:
-        NEW_VERSION: ${{ github.event.inputs.new_version }}
-
-    - name: Commit and push
-      run: |
-        if git diff --quiet; then
-          touch .bump-version-file
-          git add .bump-version-file
+        # Lógica de ejemplo:
+        if git log --format=%B -n 1 HEAD | grep -q 'fix'; then
+          npm version patch -m "Bump version to %s"
+        elif git log --format=%B -n 1 HEAD | grep -q 'feature'; then
+          npm version minor -m "Bump version to %s"
+        elif git log --format=%B -n 1 HEAD | grep -q 'breaking change'; then
+          npm version major -m "Bump version to %s"
+        else
+          npm version patch -m "Bump version to %s"
         fi
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git commit -m "[skip ci] Bump version to ${{ github.event.inputs.new_version }}"
-        eval $(ssh-agent -s)
-        echo "$SSH_KEY" | tr -d '\r' | ssh-add -
-        mkdir -p ~/.ssh
-        chmod 700 ~/.ssh
-        ssh-keyscan github.com >> ~/.ssh/known_hosts
-        chmod 600 ~/.ssh/known_hosts
-        git push "git@github.com:${{ github.repository }}.git"
-      env:
-        SSH_KEY: ${{ secrets.SSH_KEY }}
+
+    - name: Push Changes and Tags
+      run: |
+        git push origin development
+        git push --tags
+
