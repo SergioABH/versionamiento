@@ -1,4 +1,4 @@
-name: Versioning Workflow
+name: Versioning Workflows
 
 on:
   push:
@@ -31,10 +31,40 @@ jobs:
 
     - name: Determine Version
       run: |
-        branch_name=$(echo "$GITHUB_REF" | sed -e 's,.*/\(.*\),\1,')
         commit_message=$(git log --format=%B -n 1 HEAD)
 
-        if [[ "$branch_name" == "main" ]]; then
+        if [[ "$commit_message" == *"-rc."* ]]; then
+          # Obtén el número de versión actual desde package.json
+          current_version=$(node -p "require('./package.json').version")
+
+          # Extrae los componentes de la versión actual
+          major=$(echo "$current_version" | cut -d. -f1)
+          minor=$(echo "$current_version" | cut -d. -f2)
+          patch=$(echo "$current_version" | cut -d. -f3)
+          prerelease=$(echo "$current_version" | cut -d- -f2)
+          rc_number=$(echo "$prerelease" | cut -d. -f2)
+
+          # Lógica para determinar la rama y actualizar versiones
+          if [[ "$GITHUB_REF" == "refs/heads/pre-patch" ]]; then
+            rc_number=$((rc_number + 1))
+          elif [[ "$GITHUB_REF" == "refs/heads/pre-minor" ]]; then
+            rc_number=0
+            patch=$((patch + 1))
+          elif [[ "$GITHUB_REF" == "refs/heads/minor" ]]; then
+            rc_number=0
+            minor=$((minor + 1))
+          fi
+
+          # Construye la nueva versión
+          new_version="$major.$minor.$patch-rc.$rc_number"
+
+          # Actualiza la versión en package.json
+          echo "{\"version\":\"$new_version\"}" > package.json
+
+          # Imprime la nueva versión para referencia
+          echo "Nueva versión: $new_version"
+        else
+          # Lógica de ejemplo, puedes ajustarla según tus necesidades
           if echo "$commit_message" | grep -q 'fix'; then
             version_type="patch"
           elif echo "$commit_message" | grep -q 'feature'; then
@@ -44,48 +74,32 @@ jobs:
           else
             version_type="patch"
           fi
-        elif [[ "$branch_name" == "pre-patch" ]]; then
-          version_type="prerelease"
-          if echo "$commit_message" | grep -q 'fix'; then
-            npm version patch --preid=rc -m "Bump version to %s"
-          elif echo "$commit_message" | grep -q 'feature'; then
-            npm version minor --preid=rc -m "Bump version to %s"
-          elif echo "$commit_message" | grep -q 'breaking change'; then
-            npm version major --preid=rc -m "Bump version to %s"
-          else
-            npm version patch --preid=rc -m "Bump version to %s"
-          fi
-        elif [[ "$branch_name" == "pre-minor" ]]; then
-          version_type="prerelease"
-          if echo "$commit_message" | grep -q 'fix'; then
-            npm version patch --preid=rc -m "Bump version to %s"
-          elif echo "$commit_message" | grep -q 'feature'; then
-            npm version minor --preid=rc -m "Bump version to %s"
-          elif echo "$commit_message" | grep -q 'breaking change'; then
-            npm version major --preid=rc -m "Bump version to %s"
-          else
-            npm version patch --preid=rc -m "Bump version to %s"
-          fi
-        elif [[ "$branch_name" == "minor" ]]; then
-          version_type="minor"
-          if echo "$commit_message" | grep -q 'fix'; then
-            npm version patch -m "Bump version to %s"
-          elif echo "$commit_message" | grep -q 'feature'; then
-            npm version minor -m "Bump version to %s"
-          elif echo "$commit_message" | grep -q 'breaking change'; then
-            npm version major -m "Bump version to %s"
-          else
-            npm version patch -m "Bump version to %s"
-          fi
+
+          # Actualiza la versión en package.json
+          npm version "$version_type" --no-git-tag-version
+
+          # Imprime la nueva versión para referencia
+          echo "Nueva versión: $(node -p "require('./package.json').version")"
         fi
 
-    - name: Update version in package.json
+    - name: Push Changes and Tags
       run: |
-        VERSION=$(node -p "require('./package.json').version")
-        sed -i -e "s/\"version\": \".*\"/\"version\": \"$VERSION\"/g" package.json
+        current_branch=${GITHUB_REF#refs/heads/}
+        git add package.json
+        git commit -m "Bump version"
+        git push origin "$current_branch"
+        git push --tags
 
-    - name: Commit and push changes
+    - name: Push Changes with Token
+      if: github.event_name == 'push'
       run: |
-        git commit -am "Bump version to $VERSION"
-        git push
-        
+        git config --global user.email "bedoyasergio3@gmail.com"
+        git config --global user.name "SergioABH"
+        git remote add origin_with_token "https://github.com/$GITHUB_REPOSITORY.git"
+        git fetch --no-tags origin_with_token +refs/heads/*:refs/remotes/origin_with_token/*
+        git checkout main
+        git merge --no-ff origin_with_token/main
+        git push origin_with_token HEAD:refs/heads/main
+        git push --tags origin_with_token
+      env:
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
