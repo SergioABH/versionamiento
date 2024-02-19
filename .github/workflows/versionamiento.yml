@@ -1,4 +1,4 @@
-name: Versionings
+name: Versioning
 
 on:
   push:
@@ -33,19 +33,20 @@ jobs:
 
     - name: Determine version and apply
       run: |
-        # Lógica para determinar el tipo de versión según tu criterio
-        # Puedes usar variables de entorno o algún otro método para configurar el tipo de versión
-        
-        # Ejemplo: Determinar el tipo de versión basado en la rama
-        if [[ "${{ github.ref }}" == "refs/heads/minor" ]]; then
+        if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          npm version major
+        elif [[ "${{ github.ref }}" == "refs/heads/minor" ]]; then
           npm version minor
         elif [[ "${{ github.ref }}" == "refs/heads/pre-minor" ]]; then
+          npm version prerelease --preid=rc
+        elif [[ "${{ github.ref }}" == "refs/heads/pre-patch" ]]; then
           npm version prerelease --preid=rc
         else
           npm version patch
         fi
-        
+
         # Publicar el tag y la versión
         git push --follow-tags
       env:
         NODE_AUTH_TOKEN: ${{secrets.GH_TOKEN}}
+        
