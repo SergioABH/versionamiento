@@ -27,7 +27,7 @@ jobs:
         # Puedes usar variables de entorno o algún otro método para configurar el tipo de versión
         
         # Ejemplo: Determinar el tipo de versión basado en la rama
-        if [[ "$GITHUB_REF" == "refs/heads/main" ]]; then
+        if [[ "$GITHUB_REF" == "refs/heads/minor" ]]; then
           npm version minor
         elif [[ "$GITHUB_REF" == "refs/heads/pre-minor" ]]; then
           npm version prerelease --preid=rc
