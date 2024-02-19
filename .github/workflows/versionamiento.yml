@@ -33,10 +33,6 @@ jobs:
 
     - name: Determine version and apply
       run: |
-        # Lógica para determinar el tipo de versión según tu criterio
-        # Puedes usar variables de entorno o algún otro método para configurar el tipo de versión
-        
-        # Ejemplo: Determinar el tipo de versión basado en la rama
         if [[ "${{ github.ref }}" == "refs/heads/minor" ]]; then
           npm version minor
         elif [[ "${{ github.ref }}" == "refs/heads/pre-minor" ]]; then
