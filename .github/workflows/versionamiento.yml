@@ -47,7 +47,8 @@ jobs:
 
           # Incrementa el número de rc o reinicia si se cambia a una rama diferente
           if [[ "$GITHUB_REF" == "refs/heads/pre-patch" ]]; then
-            rc_number=$((rc_number + 1))
+            patch=$((patch + 1))
+            rc_number=1  # Reinicia a 1 en pre-patch
           elif [[ "$GITHUB_REF" == "refs/heads/pre-minor" ]]; then
             rc_number=0
             patch=$((patch + 1))
@@ -57,6 +58,7 @@ jobs:
           else
             # Incrementa el número de parche si no es una rama especial
             patch=$((patch + 1))
+            rc_number=1  # Reinicia a 1 el número rc
           fi
 
           # Construye la nueva versión
