@@ -1,4 +1,4 @@
-name: Versioning Workflows
+name: Versioning Workflow
 
 on:
   push:
