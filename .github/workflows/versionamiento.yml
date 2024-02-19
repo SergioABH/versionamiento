@@ -3,10 +3,10 @@ name: Versioning Workflow
 on:
   push:
     branches:
-      - main
       - pre-patch
       - pre-minor
       - minor
+      - main
 
 jobs:
   version:
@@ -56,9 +56,9 @@ jobs:
             rc_number=0
             minor=$((minor + 1))
           else
-            # Incrementa el número de parche si no es una rama especial
+            # Incrementa el número de patch
             patch=$((patch + 1))
-            rc_number=1  # Reinicia a 1 el número rc
+            rc_number=0
           fi
 
           # Construye la nueva versión
@@ -67,29 +67,29 @@ jobs:
           # Actualiza la versión en package.json
           echo "{\"version\":\"$new_version\"}" > package.json
 
-          # Imprime la nueva versión para referencia
+          # Imprime la nueva versión
           echo "Nueva versión: $new_version"
         else
-          # Lógica de ejemplo, puedes ajustarla según tus necesidades
+          # Funciones según el commit
           if echo "$commit_message" | grep -q 'fix'; then
-            # Cambios de tipo fix van a pre-patch
             new_branch="pre-patch"
             version_type="patch"
           elif echo "$commit_message" | grep -q 'feature'; then
-            # Cambios de tipo feature van a pre-minor
             new_branch="pre-minor"
             version_type="minor"
-          elif echo "$commit_message" | grep -q 'breaking change'; then
-            # Cambios de tipo breaking change van a minor
+          elif echo "$commit_message" | grep -q 'function'; then
             new_branch="minor"
             version_type="minor"
+          elif echo "$commit_message" | grep -q 'breaking change'; then
+            new_branch="main"
+            version_type="main"
           else
             # Por defecto, otros cambios van a pre-patch
             new_branch="pre-patch"
             version_type="patch"
           fi
 
-          # Cambia de rama si es necesario
+          # Cambia de rama según el commit
           if [[ "$GITHUB_REF" != "refs/heads/$new_branch" ]]; then
             git checkout -b "$new_branch"
             git push origin "$new_branch"
@@ -98,7 +98,7 @@ jobs:
           # Actualiza la versión en package.json
           npm version "$version_type" --no-git-tag-version
 
-          # Imprime la nueva versión para referencia
+          # Imprime la nueva versión
           echo "Nueva versión: $(node -p "require('./package.json').version")"
         fi
 
@@ -113,19 +113,12 @@ jobs:
       run: |
         git add .
         git commit -m "Committing local changes before merging"
-
         git remote add origin_with_token "https://github.com/$GITHUB_REPOSITORY.git"
         git fetch --no-tags origin_with_token +refs/heads/*:refs/remotes/origin_with_token/*
 
         current_branch=${GITHUB_REF#refs/heads/}
-        
-        # Fusiona los cambios desde la rama origin_with_token/main
         git merge --no-ff origin_with_token/"$current_branch"
-
-        # Empuja los cambios fusionados a la rama actual
         git push origin_with_token HEAD:refs/heads/"$current_branch"
-
-        # Empuja las etiquetas
         git push --tags origin_with_token
       env:
         GH_TOKEN: ${{ secrets.GH_TOKEN }}
