@@ -1,4 +1,4 @@
-name: Versionings
+name: Versioning
 
 on:
   push:
@@ -28,7 +28,8 @@ jobs:
         git add package.json
 
     - name: Commit changes
-      run: git commit -m "Update version"
+      run: |
+        git commit -m "Update version" || true
 
     - name: Determine version and apply
       run: |
