@@ -1,6 +1,6 @@
 {
   "name": "prueba_v1",
-  "version": "1.9.1",
+  "version": "1.9.2-rc.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -10,4 +10,3 @@
   "author": "",
   "license": "ISC"
 }
-
