@@ -33,6 +33,7 @@ jobs:
       run: |
         commit_message=$(git log --format=%B -n 1 HEAD)
 
+        # Lógica de versión personalizada
         if [[ "$commit_message" == *"-rc."* ]]; then
           # Obtén el número de versión actual desde package.json
           current_version=$(node -p "require('./package.json').version")
@@ -44,7 +45,7 @@ jobs:
           prerelease=$(echo "$current_version" | cut -d- -f2)
           rc_number=$(echo "$prerelease" | cut -d. -f2)
 
-          # Lógica para determinar la rama y actualizar versiones
+          # Incrementa el número de rc o reinicia si se cambia a una rama diferente
           if [[ "$GITHUB_REF" == "refs/heads/pre-patch" ]]; then
             rc_number=$((rc_number + 1))
           elif [[ "$GITHUB_REF" == "refs/heads/pre-minor" ]]; then
@@ -66,13 +67,27 @@ jobs:
         else
           # Lógica de ejemplo, puedes ajustarla según tus necesidades
           if echo "$commit_message" | grep -q 'fix'; then
+            # Cambios de tipo fix van a pre-patch
+            new_branch="pre-patch"
             version_type="patch"
           elif echo "$commit_message" | grep -q 'feature'; then
+            # Cambios de tipo feature van a pre-minor
+            new_branch="pre-minor"
             version_type="minor"
           elif echo "$commit_message" | grep -q 'breaking change'; then
-            version_type="major"
+            # Cambios de tipo breaking change van a minor
+            new_branch="minor"
+            version_type="minor"
           else
+            # Por defecto, otros cambios van a pre-patch
+            new_branch="pre-patch"
             version_type="patch"
+          fi
+
+          # Cambia de rama si es necesario
+          if [[ "$GITHUB_REF" != "refs/heads/$new_branch" ]]; then
+            git checkout -b "$new_branch"
+            git push origin "$new_branch"
           fi
 
           # Actualiza la versión en package.json
@@ -81,6 +96,7 @@ jobs:
           # Imprime la nueva versión para referencia
           echo "Nueva versión: $(node -p "require('./package.json').version")"
         fi
+
 
     - name: Push Changes and Tags
       run: |
