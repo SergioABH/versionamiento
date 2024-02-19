@@ -1,44 +1,64 @@
-name: Versionings
+name: Versioning
 
 on:
   push:
     branches:
-      - '*'
+      - '**'
+    paths:
+      - 'package.json'
 
 jobs:
-  version:
+  versioning:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '14'
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14
 
-    - name: Install dependencies
-      run: npm install
+      - name: Install dependencies
+        run: npm ci
 
-    - name: Determine version and apply
-      run: |
-        - name: Determine version and apply
-          run: |
+      - name: Get current version
+        id: current_version
+        run: echo "::set-output name=version::$(npm version --json | jq -r '.version')"
 
-            # Lógica para determinar el tipo de versión según tu criterio
-            # Puedes usar variables de entorno o algún otro método para configurar el tipo de versión
-            
-            # Ejemplo: Determinar el tipo de versión basado en la rama
-            if [[ "$GITHUB_REF" == "refs/heads/minor" ]]; then
-              npm version minor
-            elif [[ "$GITHUB_REF" == "refs/heads/pre-minor" ]]; then
-              npm version prerelease --preid=rc
+      - name: Determine new version
+        id: new_version
+        run: |
+          VERSION_PARTS=(${{ steps.current_version.outputs.version }})
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+          PRE_RELEASE=${VERSION_PARTS[3]}
+
+          if [[ "${{ github.ref }}" == "refs/heads/minor" ]]; then
+            if [[ "$PRE_RELEASE" == "rc"* ]]; then
+              NEW_VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
             else
-              npm version patch
+              NEW_VERSION="$MAJOR.$((MINOR + 1)).0"
             fi
-            
-            # Publicar el tag y la versión
-            git push --follow-tags
-          env:
-            NODE_AUTH_TOKEN: ${{secrets.GH_TOKEN}}
+          elif [[ "${{ github.ref }}" == "refs/heads/pre-minor" ]]; then
+            NEW_VERSION="$MAJOR.$MINOR.$((PATCH + 1))-rc.0"
+          elif [[ "${{ github.ref }}" == "refs/heads/pre-patch" ]]; then
+            NEW_VERSION="$MAJOR.$MINOR.$((PATCH + 1))-rc.$((PRE_RELEASE + 1))"
+          else
+            NEW_VERSION="$MAJOR.$MINOR.$((PATCH + 1))-rc.$((PRE_RELEASE + 1))"
+          fi
+
+          echo "::set-output name=new_version::$NEW_VERSION"
+
+      - name: Update version
+        run: npm version --no-git-tag-version ${{ steps.new_version.outputs.new_version }}
+
+      - name: Commit and push new version
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add package.json
+          git commit -m "Update version to ${{ steps.new_version.outputs.new_version }}"
+          git push
