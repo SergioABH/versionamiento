@@ -25,14 +25,6 @@ jobs:
       run: |
         - name: Determine version and apply
           run: |
-            # Mostrar el estado del repositorio para depurar
-            git status
-
-            # Verificar si hay cambios pendientes en el repositorio
-            if [[ -n "$(git status --porcelain)" ]]; then
-              echo "El directorio de trabajo no está limpio. Por favor, confirma tus cambios antes de continuar."
-              exit 1
-            fi
 
             # Lógica para determinar el tipo de versión según tu criterio
             # Puedes usar variables de entorno o algún otro método para configurar el tipo de versión
@@ -50,4 +42,3 @@ jobs:
             git push --follow-tags
           env:
             NODE_AUTH_TOKEN: ${{secrets.GH_TOKEN}}
-          shell: bash
