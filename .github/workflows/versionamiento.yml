@@ -107,13 +107,21 @@ jobs:
     - name: Push Changes with Token
       if: github.event_name == 'push'
       run: |
-        git config --global user.email "bedoyasergio3@gmail.com"
-        git config --global user.name "SergioABH"
+        git add .
+        git commit -m "Committing local changes before merging"
+
         git remote add origin_with_token "https://github.com/$GITHUB_REPOSITORY.git"
         git fetch --no-tags origin_with_token +refs/heads/*:refs/remotes/origin_with_token/*
-        git checkout main
-        git merge --no-ff origin_with_token/main
-        git push origin_with_token HEAD:refs/heads/main
+
+        current_branch=${GITHUB_REF#refs/heads/}
+        
+        # Fusiona los cambios desde la rama origin_with_token/main
+        git merge --no-ff origin_with_token/"$current_branch"
+
+        # Empuja los cambios fusionados a la rama actual
+        git push origin_with_token HEAD:refs/heads/"$current_branch"
+
+        # Empuja las etiquetas
         git push --tags origin_with_token
       env:
         GH_TOKEN: ${{ secrets.GH_TOKEN }}
