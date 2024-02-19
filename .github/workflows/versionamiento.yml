@@ -25,6 +25,12 @@ jobs:
       run: |
         # Lógica para determinar el tipo de versión según tu criterio
         # Puedes usar variables de entorno o algún otro método para configurar el tipo de versión
+
+        # Verificar si hay cambios pendientes en el repositorio
+        if [[ -n "$(git status --porcelain)" ]]; then
+          echo "El directorio de trabajo no está limpio. Por favor, confirma tus cambios antes de continuar."
+          exit 1
+        fi
         
         # Ejemplo: Determinar el tipo de versión basado en la rama
         if [[ "$GITHUB_REF" == "refs/heads/minor" ]]; then
