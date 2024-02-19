@@ -33,7 +33,9 @@ jobs:
 
     - name: Determine version and apply
       run: |
-        if [[ "${{ github.ref }}" == "refs/heads/minor" ]]; then
+        if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          npm version major
+        elif [[ "${{ github.ref }}" == "refs/heads/minor" ]]; then
           npm version minor
         elif [[ "${{ github.ref }}" == "refs/heads/pre-minor" ]]; then
           npm version prerelease --preid=rc
