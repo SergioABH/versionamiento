@@ -1,131 +1,49 @@
-name: Versioning Workflows
+name: Versionings
 
 on:
   push:
     branches:
-      - main
-      - pre-patch
-      - pre-minor
-      - minor
+      - '*'
 
 jobs:
   version:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
+    - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v2
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
       with:
         node-version: '14'
 
-    - name: Configure Git
-      run: |
-        git config --global user.email "bedoyasergio3@gmail.com"
-        git config --global user.name "SergioABH"
-
-    - name: Install Dependencies
+    - name: Install dependencies
       run: npm install
 
-    - name: Determine Version
+    - name: Stage changes
       run: |
-        commit_message=$(git log --format=%B -n 1 HEAD)
+        git config --local user.email "actions@github.com"
+        git config --local user.name "GitHub Actions"
+        git add package.json
 
-        # Lógica de versión personalizada
-        if [[ "$commit_message" == *"-rc."* ]]; then
-          # Obtén el número de versión actual desde package.json
-          current_version=$(node -p "require('./package.json').version")
+    - name: Commit changes
+      run: |
+        git commit -m "Update version" || true
 
-          # Extrae los componentes de la versión actual
-          major=$(echo "$current_version" | cut -d. -f1)
-          minor=$(echo "$current_version" | cut -d. -f2)
-          patch=$(echo "$current_version" | cut -d. -f3)
-          prerelease=$(echo "$current_version" | cut -d- -f2)
-          rc_number=$(echo "$prerelease" | cut -d. -f2)
-
-          # Incrementa el número de rc o reinicia si se cambia a una rama diferente
-          if [[ "$GITHUB_REF" == "refs/heads/pre-patch" ]]; then
-            patch=$((patch + 1))
-            rc_number=1  # Reinicia a 1 en pre-patch
-          elif [[ "$GITHUB_REF" == "refs/heads/pre-minor" ]]; then
-            rc_number=0
-            patch=$((patch + 1))
-          elif [[ "$GITHUB_REF" == "refs/heads/minor" ]]; then
-            rc_number=0
-            minor=$((minor + 1))
-          else
-            # Incrementa el número de parche si no es una rama especial
-            patch=$((patch + 1))
-            rc_number=1  # Reinicia a 1 el número rc
-          fi
-
-          # Construye la nueva versión
-          new_version="$major.$minor.$patch-rc.$rc_number"
-
-          # Actualiza la versión en package.json
-          echo "{\"version\":\"$new_version\"}" > package.json
-
-          # Imprime la nueva versión para referencia
-          echo "Nueva versión: $new_version"
+    - name: Determine version and apply
+      run: |
+        if [[ "${{ github.ref }}" == "refs/heads/minor" ]]; then
+          npm version minor
+        elif [[ "${{ github.ref }}" == "refs/heads/pre-minor" ]]; then
+          npm version prerelease --preid=rc
+        elif [[ "${{ github.ref }}" == "refs/heads/pre-patch" ]]; then
+          npm version prerelease --preid=alpha
         else
-          # Lógica de ejemplo, puedes ajustarla según tus necesidades
-          if echo "$commit_message" | grep -q 'fix'; then
-            # Cambios de tipo fix van a pre-patch
-            new_branch="pre-patch"
-            version_type="patch"
-          elif echo "$commit_message" | grep -q 'feature'; then
-            # Cambios de tipo feature van a pre-minor
-            new_branch="pre-minor"
-            version_type="minor"
-          elif echo "$commit_message" | grep -q 'breaking change'; then
-            # Cambios de tipo breaking change van a minor
-            new_branch="minor"
-            version_type="minor"
-          else
-            # Por defecto, otros cambios van a pre-patch
-            new_branch="pre-patch"
-            version_type="patch"
-          fi
-
-          # Cambia de rama si es necesario
-          if [[ "$GITHUB_REF" != "refs/heads/$new_branch" ]]; then
-            git checkout -b "$new_branch"
-            git push origin "$new_branch"
-          fi
-
-          # Actualiza la versión en package.json
-          npm version "$version_type" --no-git-tag-version
-
-          # Imprime la nueva versión para referencia
-          echo "Nueva versión: $(node -p "require('./package.json').version")"
+          npm version patch
         fi
 
-    - name: Push Changes and Tags
-      run: |
-        current_branch=${GITHUB_REF#refs/heads/}
-        git push origin "$current_branch"
-        git push --tags
-
-    - name: Push Changes with Token
-      if: github.event_name == 'push'
-      run: |
-        git add .
-        git commit -m "Committing local changes before merging"
-
-        git remote add origin_with_token "https://github.com/$GITHUB_REPOSITORY.git"
-        git fetch --no-tags origin_with_token +refs/heads/*:refs/remotes/origin_with_token/*
-
-        current_branch=${GITHUB_REF#refs/heads/}
-        
-        # Fusiona los cambios desde la rama origin_with_token/main
-        git merge --no-ff origin_with_token/"$current_branch"
-
-        # Empuja los cambios fusionados a la rama actual
-        git push origin_with_token HEAD:refs/heads/"$current_branch"
-
-        # Empuja las etiquetas
-        git push --tags origin_with_token
+        # Publicar el tag y la versión
+        git push --follow-tags
       env:
-        GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        NODE_AUTH_TOKEN: ${{secrets.GH_TOKEN}}
