@@ -1,4 +1,4 @@
-name: Versioning Workflow
+name: Versioning Workflows
 
 on:
   push:
@@ -98,12 +98,9 @@ jobs:
           echo "Nueva versión: $(node -p "require('./package.json').version")"
         fi
 
-
     - name: Push Changes and Tags
       run: |
         current_branch=${GITHUB_REF#refs/heads/}
-        git add package.json
-        git commit -m "Bump version"
         git push origin "$current_branch"
         git push --tags
 
