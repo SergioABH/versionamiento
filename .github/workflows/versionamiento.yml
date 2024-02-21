@@ -51,11 +51,6 @@ jobs:
           fi
         fi
 
-        # If pulling from pre-patch to pre-minor, increment patch version instead of rc
-        if [[ "${{ github.ref }}" == "refs/heads/pre-minor" && "${{ github.event.before }}" != "${{ github.sha }}" ]]; then
-          npm version patch
-        fi
-
         # Publicar el tag y la versión
         git push --follow-tags
       env:
