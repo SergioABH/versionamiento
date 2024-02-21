@@ -54,4 +54,4 @@ jobs:
         # Publicar el tag y la versión
         git push --follow-tags
       env:
-        NODE_AUTH_TOKEN: ${{secrets.GH_TOKEN}}     
+        NODE_AUTH_TOKEN: ${{secrets.GH_TOKEN}}
