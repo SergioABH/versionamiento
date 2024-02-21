@@ -1,4 +1,4 @@
-name: Versioning Test
+name: Versioning Test 2
 
 on:
   push:
