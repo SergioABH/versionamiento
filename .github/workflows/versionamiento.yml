@@ -52,3 +52,4 @@ jobs:
         git push --follow-tags
       env:
         NODE_AUTH_TOKEN: ${{secrets.GH_TOKEN}}
+
