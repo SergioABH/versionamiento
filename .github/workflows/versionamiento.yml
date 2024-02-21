@@ -33,15 +33,26 @@ jobs:
 
     - name: Determine version and apply
       run: |
-        if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-          npm version major
-        elif [[ "${{ github.ref }}" == "refs/heads/minor" ]]; then
-          npm version minor
-        elif [[ "${{ github.ref }}" == "refs/heads/pre-minor" ]]; then
-          npm version prerelease --preid=rc
-        elif [[ "${{ github.ref }}" == "refs/heads/pre-patch" ]]; then
-          npm version prerelease --preid=rc
+        if [[ "${{ github.ref }}" == "refs/heads/main" && "${{ github.event_name }}" == "pull_request" && "${{ github.event.before }}" != "${{ github.sha }}" ]]; then
+          # Only increment major version on pull requests from minor branch
+          if [[ "${{ github.event.head_ref }}" == "refs/heads/minor" ]]; then
+            npm version major
+          fi
         else
+          # For other branches, follow standard versioning logic
+          if [[ "${{ github.ref }}" == "refs/heads/minor" ]]; then
+            npm version minor
+          elif [[ "${{ github.ref }}" == "refs/heads/pre-minor" ]]; then
+            npm version prerelease --preid=rc
+          elif [[ "${{ github.ref }}" == "refs/heads/pre-patch" ]]; then
+            npm version prerelease --preid=rc
+          else
+            npm version patch
+          fi
+        fi
+
+        # If pulling from pre-patch to pre-minor, increment patch version instead of rc
+        if [[ "${{ github.ref }}" == "refs/heads/pre-minor" && "${{ github.event.before }}" != "${{ github.sha }}" ]]; then
           npm version patch
         fi
 
