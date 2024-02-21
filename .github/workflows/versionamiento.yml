@@ -46,9 +46,6 @@ jobs:
             npm version prerelease --preid=rc
           elif [[ "${{ github.ref }}" == "refs/heads/pre-patch" ]]; then
             npm version prerelease --preid=rc
-          else
-            npm version patch
-          fi
         fi
 
         # Publicar el tag y la versión
