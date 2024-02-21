@@ -1,4 +1,4 @@
-name: Versioning
+name: Versioning Test
 
 on:
   push:
@@ -25,28 +25,33 @@ jobs:
       run: |
         git config --local user.email "actions@github.com"
         git config --local user.name "GitHub Actions"
-        git add package.json
+        git add .
 
     - name: Commit changes
       run: |
-        git commit -m "Update version" || true
+        git diff-index --quiet HEAD || git commit -m "Update version"
 
     - name: Determine version and apply
       run: |
-        if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-          npm version major
-        elif [[ "${{ github.ref }}" == "refs/heads/minor" ]]; then
-          npm version minor
-        elif [[ "${{ github.ref }}" == "refs/heads/pre-minor" ]]; then
-          npm version prerelease --preid=rc
-        elif [[ "${{ github.ref }}" == "refs/heads/pre-patch" ]]; then
-          npm version prerelease --preid=rc
+        if [[ "${{ github.ref }}" == "refs/heads/main" && "${{ github.event_name }}" == "pull_request" && "${{ github.event.before }}" != "${{ github.sha }}" ]]; then
+          # Only increment major version on pull requests from minor branch
+          if [[ "${{ github.event.head_ref }}" == "refs/heads/minor" ]]; then
+            npm version major
+          fi
         else
-          npm version patch
+          # For other branches, follow standard versioning logic
+          if [[ "${{ github.ref }}" == "refs/heads/minor" ]]; then
+            npm version minor
+          elif [[ "${{ github.ref }}" == "refs/heads/pre-minor" ]]; then
+            npm version prerelease --preid=rc
+          elif [[ "${{ github.ref }}" == "refs/heads/pre-patch" ]]; then
+            npm version prerelease --preid=rc
+          else
+            npm version patch
+          fi
         fi
 
         # Publicar el tag y la versión
         git push --follow-tags
       env:
         NODE_AUTH_TOKEN: ${{secrets.GH_TOKEN}}
-        
