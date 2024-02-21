@@ -1,4 +1,4 @@
-name: Versioning Test 2
+name: Versioning Test
 
 on:
   push:
@@ -25,11 +25,11 @@ jobs:
       run: |
         git config --local user.email "actions@github.com"
         git config --local user.name "GitHub Actions"
-        git add package.json
+        git add .
 
     - name: Commit changes
       run: |
-        git commit -m "Update version" || true
+        git diff-index --quiet HEAD || git commit -m "Update version"
 
     - name: Determine version and apply
       run: |
@@ -39,10 +39,10 @@ jobs:
             npm version major
           fi
         else
+          # For other branches, follow standard versioning logic
           if [[ "${{ github.ref }}" == "refs/heads/minor" ]]; then
             npm version minor
           elif [[ "${{ github.ref }}" == "refs/heads/pre-minor" ]]; then
-            npm version minor
             npm version prerelease --preid=rc
           elif [[ "${{ github.ref }}" == "refs/heads/pre-patch" ]]; then
             npm version prerelease --preid=rc
