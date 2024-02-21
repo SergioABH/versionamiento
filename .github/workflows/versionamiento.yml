@@ -43,6 +43,7 @@ jobs:
           if [[ "${{ github.ref }}" == "refs/heads/minor" ]]; then
             npm version minor
           elif [[ "${{ github.ref }}" == "refs/heads/pre-minor" ]]; then
+            npm version minor
             npm version prerelease --preid=rc
           elif [[ "${{ github.ref }}" == "refs/heads/pre-patch" ]]; then
             npm version prerelease --preid=rc
